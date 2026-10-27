@@ -269,8 +269,8 @@ class HotKits(Adapter):
         for section, x in b["extra"]:
             what = "an assembled PCB" if section == "Assembled PCBs" else "a kit"
             opt = re.search(r"\(([^()]+?) assembly option\)", x["title"])  # 'Datura Tube Overdrive (Diezel VH4 assembly option)'
-            price = _price(x)
-            offers.append(f"{what}{f' ({opt.group(1)} option)' if opt else ''}" + (price if price.startswith(":") else f" {price}").rstrip())
+            offer_price = _price(x)
+            offers.append(f"{what}{f' ({opt.group(1)} option)' if opt else ''}" + (offer_price if offer_price.startswith(":") else f" {offer_price}").rstrip())
         lines = []
         if b.get("only"):
             lines.append(f"Sold as {'an assembled PCB' if b['only'] == 'Assembled PCBs' else 'a kit'} only.")

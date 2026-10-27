@@ -1,0 +1,14 @@
+.git
+.venv
+**/.venv
+**/node_modules
+app/.svelte-kit
+app/build
+app/dev-dist
+/data
+transistor-dump
+.env
+**/__pycache__
+**/*.pyc
+.build
+.swiftpm

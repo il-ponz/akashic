@@ -140,7 +140,8 @@ Requires Python 3.12+, [uv](https://docs.astral.sh/uv/), poppler (`brew install 
 ```sh
 cd scraper
 uv venv .venv && uv pip install -e .
-.venv/bin/pcblib scrape pedalpcb      # each vendor: pedalpcb aionfx madbean guitarpcb fuzzdog sheepylove deadendfx moonn fivecats parasit pcbguitarmania deadastronaut bentfishbowl ggg lectricfx expanon zerogiod otrfx dirtmonger pcbway-gtu
+.venv/bin/pcblib vendors              # list every registered source
+.venv/bin/pcblib scrape pedalpcb      # scrape one source
 .venv/bin/pcblib stats
 .venv/bin/pcblib audit                # flags parts rows that look invalid; report in data/cache/audit/, compared with the last run
 .venv/bin/pcblib export               # writes app/static/data/*.json
@@ -149,6 +150,20 @@ uv venv .venv && uv pip install -e .
 ```
 
 ### Keeping it current
+
+To refresh **all registered sources** and update the exported data bundle,
+run this from the repository root:
+
+```sh
+scripts/refresh-pages.sh
+```
+
+It refreshes vendor listing and product pages in parallel (up to four sources
+at a time), reuses cached build documents, retries failed sources, then runs
+`stats`, `audit`, and `export`. The SQLite library and caches remain local;
+per-source logs are written under `data/cache/refresh-pages/`. A nonzero exit
+means one or more sources still failed after retries; successful sources are
+still exported.
 
 `scripts/refresh.sh` re-fetches every vendor's pages (`scrape --refresh-pages`: prices, stock and
 new boards; cached build documents are kept), runs `stats` and `audit`, and deploys only when the
@@ -161,7 +176,7 @@ Remove it with `launchctl bootout gui/$(id -u)/com.cryptideffects.akashic-refres
 
 Every HTTP response and PDF is cached, so re-running a scrape after a parser change costs no network. Use `--reset` to drop a vendor's rows first, `--only <substring>` and `--limit N` to test on a few products, `--refresh-pages` to re-fetch the vendor's pages but keep cached documents, and `--refresh` to bypass the cache entirely. Requests to each host are spaced 1.5 s apart.
 
-Running all five scrapers in parallel is fine: the database is in WAL mode and each circuit commits on its own.
+Multiple scrapers can run in parallel: the database is in WAL mode and each circuit commits on its own.
 
 ## Attaching a KiCad schematic
 
@@ -173,6 +188,35 @@ Every circuit has a slot for a hand-drawn KiCad fragment. Attach one and it beco
 ```
 
 ## Running the app
+
+### Docker Compose
+
+Requires Docker Engine with the Compose plugin. From the repository root, build
+the scraper and app images, refresh all sources, then start the local app:
+
+```sh
+docker compose build scraper app
+docker compose run --rm scraper bash scripts/refresh-pages.sh
+docker compose up app
+```
+
+Open <http://localhost:5173>. The scraper container includes Python 3.12,
+poppler, and Tesseract; no local Python or Node installation is needed. The
+SQLite database, scraper caches, and exported app data persist in the working
+tree. Rerun the refresh command after the initial scrape to update the library.
+
+For a static Nginx preview instead of the Vite development server, first refresh
+the data, then run:
+
+```sh
+docker compose --profile static up --build static
+```
+
+Open <http://localhost:8080>. Rebuild the static image after each data refresh.
+See [DOCKER.md](DOCKER.md) for one-source refresh commands and implementation
+details.
+
+### Run directly on the host
 
 Requires Node 22+.
 

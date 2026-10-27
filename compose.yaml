@@ -1,0 +1,36 @@
+services:
+  scraper:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: docker/scraper.Dockerfile
+    working_dir: /workspace
+    environment:
+      PCBLIB_BIN: /opt/venv/bin/pcblib
+      PYTHON_BIN: /opt/venv/bin/python
+      UV_PROJECT_ENVIRONMENT: /opt/venv
+    volumes:
+      - .:/workspace
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/app-dev.Dockerfile
+    working_dir: /workspace/app
+    command: sh -c "npm ci && exec ./node_modules/.bin/vite dev --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./app:/workspace/app
+      - app_node_modules:/workspace/app/node_modules
+
+  static:
+    profiles: ["static"]
+    build:
+      context: .
+      dockerfile: docker/app-static.Dockerfile
+    ports:
+      - "8080:80"
+
+volumes:
+  app_node_modules:

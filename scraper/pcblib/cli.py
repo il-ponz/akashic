@@ -77,6 +77,8 @@ def scrape(vendor: str, limit: int = 0, refresh: bool = False, refresh_pages: bo
             elif gone:
                 con.print(f"[yellow]{vendor}: {gone} boards no longer listed (kept, marked delisted)[/]")
     con.print(f"[bold]{vendor}[/]: {n_ok} circuits stored, {n_skip} targets skipped")
+    if n_err:
+        raise typer.Exit(code=1)
 
 
 @app.command()
